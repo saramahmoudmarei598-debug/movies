@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>وصفات الطعام - Forkify</title>
+    <title>عالم الوصفات - Forkify</title>
     <style>
         :root {
             --primary-color: #f39c12;
@@ -34,18 +34,10 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
         }
 
-        .logo h1 {
-            font-size: 1.8rem;
-        }
+        .logo h1 { font-size: 1.8rem; }
+        .logo span { color: var(--primary-color); }
 
-        .logo span {
-            color: var(--primary-color);
-        }
-
-        #form {
-            display: flex;
-            gap: 10px;
-        }
+        #form { display: flex; gap: 10px; }
 
         .search {
             background-color: #2b2b2b;
@@ -55,7 +47,6 @@
             color: #fff;
             font-size: 0.95rem;
             outline: none;
-            transition: all 0.3s ease;
             width: 250px;
         }
 
@@ -72,17 +63,9 @@
             border-radius: 25px;
             cursor: pointer;
             font-weight: bold;
-            transition: background 0.3s ease;
         }
 
-        .btn-search:hover {
-            background-color: #d35400;
-        }
-
-        .section-title {
-            padding: 2rem 3rem 0;
-        }
-
+        .section-title { padding: 2rem 3rem 0; }
         .section-title h2 {
             border-right: 4px solid var(--primary-color);
             padding-right: 10px;
@@ -101,15 +84,9 @@
             background-color: var(--card-background);
             border-radius: 10px;
             overflow: hidden;
-            position: relative;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease;
             display: flex;
             flex-direction: column;
-        }
-
-        .recipe:hover {
-            transform: translateY(-8px);
         }
 
         .recipe img {
@@ -133,35 +110,65 @@
             text-overflow: ellipsis;
         }
 
-        .recipe-info p {
-            font-size: 0.85rem;
-            color: #aaa;
-        }
+        .recipe-info p { font-size: 0.85rem; color: #aaa; }
 
-        .recipe-info a {
-            display: inline-block;
+        .btn-details {
             margin-top: 8px;
-            padding: 0.5rem 1rem;
+            padding: 0.6rem;
             background-color: var(--primary-color);
             color: #fff;
-            text-decoration: none;
+            border: none;
             border-radius: 5px;
-            text-align: center;
+            cursor: pointer;
             font-weight: bold;
-            font-size: 0.85rem;
-            transition: background 0.3s;
         }
 
-        .recipe-info a:hover {
-            background-color: #d35400;
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
 
-        .no-results {
-            text-align: center;
-            margin-top: 3rem;
-            font-size: 1.2rem;
-            color: #888;
+        .modal-content {
+            background-color: var(--card-background);
+            padding: 2rem;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
         }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #fff;
+        }
+
+        .ingredients-list {
+            margin-top: 10px;
+            padding-right: 20px;
+        }
+
+        .ingredients-list li { margin-bottom: 5px; }
+
+        .source-link {
+            display: inline-block;
+            margin-top: 15px;
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        .no-results { text-align: center; margin-top: 3rem; color: #888; }
     </style>
 </head>
 <body>
@@ -181,15 +188,24 @@
 
     <main id="main"></main>
 
+    <!-- النافذة المنبثقة للوصفة -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="close-modal">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
     <script>
         const API_BASE_URL = 'https://forkify-api.jonas.io/api/v2/recipes';
 
         const main = document.getElementById('main');
         const form = document.getElementById('form');
         const search = document.getElementById('search');
-        const titleHeading = document.getElementById('title-heading');
+        const modal = document.getElementById('modal');
+        const modalBody = document.getElementById('modal-body');
+        const closeModal = document.getElementById('close-modal');
 
-        // جلب وصفات البيتزا افتراضياً عند فتح الصفحة
         getRecipes('pizza');
 
         async function getRecipes(query) {
@@ -201,10 +217,9 @@
                 if (data.data && data.data.recipes && data.data.recipes.length > 0) {
                     showRecipes(data.data.recipes);
                 } else {
-                    main.innerHTML = '<h3 class="no-results">لم يتم العثور على أي وصفات. جربي البحث باللغة الإنجليزية (مثل: pizza, pasta, salad).</h3>';
+                    main.innerHTML = '<h3 class="no-results">لم يتم العثور على أي نتائج.</h3>';
                 }
             } catch (error) {
-                console.error('Error fetching data:', error);
                 main.innerHTML = '<h3 class="no-results">حدث خطأ أثناء جلب الوصفات.</h3>';
             }
         }
@@ -223,7 +238,7 @@
                     <div class="recipe-info">
                         <h3>${title}</h3>
                         <p>بواسطة: ${publisher}</p>
-                        <a href="https://forkify-v2.netlify.app/#${id}" target="_blank">عرض الوصفة الكاملة</a>
+                        <button class="btn-details" onclick="getRecipeDetails('${id}')">عرض التفاصيل والمقادير</button>
                     </div>
                 `;
 
@@ -231,13 +246,42 @@
             });
         }
 
+        async function getRecipeDetails(id) {
+            modalBody.innerHTML = '<h3>جاري تحميل المقادير...</h3>';
+            modal.style.display = 'flex';
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/${id}`);
+                const data = await res.json();
+                const recipe = data.data.recipe;
+
+                let ingredientsHTML = '<ul class="ingredients-list">';
+                recipe.ingredients.forEach(ing => {
+                    const quantity = ing.quantity ? ing.quantity : '';
+                    const unit = ing.unit ? ing.unit : '';
+                    ingredientsHTML += `<li>${quantity} ${unit} ${ing.description}</li>`;
+                });
+                ingredientsHTML += '</ul>';
+
+                modalBody.innerHTML = `
+                    <h2>${recipe.title}</h2>
+                    <p style="margin-top: 5px; color: #aaa;">وقت التحضير: ${recipe.cooking_time} دقيقة | الوجبات: ${recipe.servings}</p>
+                    <h3 style="margin-top: 15px; color: var(--primary-color);">المقادير:</h3>
+                    ${ingredientsHTML}
+                    <a class="source-link" href="${recipe.source_url}" target="_blank">الموقع الأصلي للخطوات الكاملة 🔗</a>
+                `;
+            } catch (error) {
+                modalBody.innerHTML = '<h3>حدث خطأ أثناء جلب تفاصيل الوصفة.</h3>';
+            }
+        }
+
+        closeModal.onclick = () => modal.style.display = 'none';
+        window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+
         form.addEventListener('submit', (e) => {
             e.preventDefault();
-
             const searchTerm = search.value.trim();
-
-            if (searchTerm && searchTerm !== '') {
-                titleHeading.textContent = `نتائج البحث عن: ${searchTerm} 🔍`;
+            if (searchTerm) {
                 getRecipes(searchTerm);
                 search.value = '';
             }
